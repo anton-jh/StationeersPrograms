@@ -1,0 +1,81 @@
+alias rocket d0
+alias silo d1
+alias miner d2
+alias switch d3
+alias fuelPump d4
+
+define departFuel 5000
+define maxQuantity 100
+define modeLaunch 1
+define modeReady 4
+define modeReturn 5
+define modeLanded 0
+define modeTravel 2
+
+
+s silo Open 0
+s fuelPump On 0
+s switch Open 0
+
+
+standby:
+yield
+l r0 switch Setting
+beqz r0 standby
+
+prepare:
+yield
+
+l r0 silo Quantity
+snez r1 r0
+s silo Open r1
+
+l r0 rocket Fuel
+slt r2 r0 departFuel
+l r0 switch Setting
+select r2 r0 r2 0
+s fuelPump On r2
+
+or r0 r1 r2
+bnez r0 prepare
+l r0 switch Setting
+beqz r0 standby
+
+s rocket Activate modeLaunch
+waitUntilReady:
+yield
+l r0 rocket Mode
+bne r0 modeReady waitUntilReady
+
+s miner Activate 1
+continueMining:
+yield
+l r0 switch Setting
+beqz r0 land
+l r0 rocket Fuel
+l r1 rocket ReturnFuelCost
+blt r0 r1 land
+l r0 silo Quantity
+bge r0 maxQuantity land
+l r0 rocket CollectableGoods
+bnez r0 continueMining
+
+s miner Activate 0
+s rocket Activate modeTravel
+waitUntilFoundCollectables:
+yield
+l r0 rocket CollectableGoods
+beqz r0 waitUntilFoundCollectables
+s rocket Activate modeReady
+j waitUntilReady
+
+land:
+s miner Activate 0
+s rocket Activate modeReturn
+
+waitUntilLanded:
+yield
+l r0 rocket Mode
+bne r0 modeLanded waitUntilLanded
+
+j prepare

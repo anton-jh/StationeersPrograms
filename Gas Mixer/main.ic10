@@ -1,0 +1,41 @@
+## PRECISE GAS MIXING by isyiaco (Modified for pressure regulated output)
+## Target: gas ratio in mix
+## Formula:
+## Y = ( T1*X ) / ( T1*X + T2*(1-X) )
+
+alias analyzer1 d0
+alias analyzer2 d1
+alias analyzerOut d2
+alias mixer d3
+
+alias temp1 r8
+alias temp2 r9
+alias calculatedRatio r10
+alias active r11
+
+define desiredRatio 0.66
+define desiredPressure 10000
+
+
+main:
+l r0 analyzerOut Pressure
+slt r0 r0 desiredPressure
+beqz r0 end
+
+l temp1 analyzer1 Temperature
+l temp2 analyzer2 Temperature
+
+mul r0 temp1 desiredRatio
+sub r1 1 desiredRatio
+mul r1 temp2 r1
+add r1 r0 r1
+div calculatedRatio r0 r1
+
+mul calculatedRatio 100 calculatedRatio
+s mixer Setting calculatedRatio
+s mixer On 1
+
+end:
+yield
+s mixer On 0
+j main

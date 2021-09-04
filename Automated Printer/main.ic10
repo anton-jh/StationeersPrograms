@@ -1,0 +1,53 @@
+alias printer d0
+alias dial d1
+alias triggerPlate d2
+
+alias idleTime r8
+
+
+define maxIdleTime 30
+
+
+
+standby:
+yield
+move idleTime 0
+l r0 triggerPlate Setting
+l r1 printer On
+or r0 r0 r1
+beqz r0 standby
+s printer On 1
+
+
+idle:
+l r0 printer On
+beqz r0 standby
+l r0 printer Activate
+bnez r0 startCounting
+sleep 1
+l r0 triggerPlate Setting
+beqz r0 checkIdleTime
+move idleTime 0
+j idle
+
+checkIdleTime:
+add idleTime idleTime 1
+blt idleTime maxIdleTime idle
+s printer On 0
+s dial Setting 1
+j standby
+
+
+startCounting:
+s printer ClearMemory 1
+
+printing:
+yield
+l r0 printer Activate
+beqz r0 idle
+l r0 dial Setting
+beqz r0 printing
+l r1 printer ExportCount
+blt r1 r0 printing
+s printer Activate 0
+j idle

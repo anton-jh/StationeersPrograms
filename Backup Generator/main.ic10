@@ -1,0 +1,26 @@
+alias generator d0
+alias limitDial d1
+
+define batteryTypeHash -1
+define upperLimitOffset 0.2
+
+
+
+loop:
+yield
+lb r0 batteryTypeHash Ratio Average
+l r1 limitDial Setting
+mul r1 r1 0.1
+add r2 r1 upperLimitOffset
+
+blt r0 r1 turnOn
+bgt r0 r2 turnOff
+j loop
+
+turnOn:
+s generator On 1
+j loop
+
+turnOff:
+s generator On 0
+j loop

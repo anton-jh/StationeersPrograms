@@ -1,0 +1,19 @@
+alias weatherStation d0
+alias alarm d1
+alias testSwitch d2
+
+define modeStormIncoming 1
+
+
+
+loop:
+sleep 10
+
+l r0 weatherStation Mode
+seq r0 r0 modeStormIncoming
+l r1 testSwitch Setting
+or r0 r0 r1
+s alarm On r0
+sleep 2
+s alarm On 0
+j loop

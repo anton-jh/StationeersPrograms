@@ -1,0 +1,27 @@
+alias importBin d0
+alias sorter d1
+alias recycler d2
+alias centrifuge d3
+
+define reagentMixHash -1641500434
+
+
+s sorter Mode 2
+
+
+loop:
+yield
+ls r0 importBin 0 Occupied
+seqz r0 r0
+s importBin Open r0
+
+checkSorter:
+ls r0 sorter 0 OccupantHash
+seq r0 r0 reagentMixHash
+s sorter Output r0
+
+ls r0 recycler 0 Occupied
+l r1 recycler Activate
+or r0 r0 r1
+s recycler On r0
+# will this work? probably not...

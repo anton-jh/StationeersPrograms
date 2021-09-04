@@ -1,0 +1,45 @@
+## PRECISE GAS MIXING by isyiaco
+## Target: gas ratio in mix
+## Formula:
+## Y = ( T1*X ) / ( T1*X + T2*(1-X) )
+alias ANALYZERGAS1 d0
+alias ANALYZERGAS2 d1
+alias GASMIXER d2
+alias MEMORYDESIRED d3
+alias MEMORYCALCULATED d4
+alias LEVER d5
+alias GAS1TEMPERATURE r0 # T1 in formula, Kelvin
+alias GAS2TEMPERATURE r1 # T2 in formula, Kelvin
+alias RATIODESIRED r2    # X in formula, 0..1
+alias RATIOCALCULATED r3 # Y in formula, 0..1
+alias LEVERSTATE r4
+alias TMP1 r5
+alias TMP2 r6
+
+##
+waitlever:
+l LEVERSTATE LEVER Open
+beq LEVERSTATE 1 main
+yield
+j waitlever
+
+##
+main:
+l GAS1TEMPERATURE ANALYZERGAS1 Temperature
+l GAS2TEMPERATURE ANALYZERGAS2 Temperature
+l RATIODESIRED MEMORYDESIRED Setting
+## calculation start
+mul TMP1 GAS1TEMPERATURE RATIODESIRED
+sub TMP2 1 RATIODESIRED
+mul TMP2 GAS2TEMPERATURE TMP2
+add TMP2 TMP1 TMP2
+div RATIOCALCULATED TMP1 TMP2
+s MEMORYCALCULATED Setting RATIOCALCULATED
+## calculation end
+mul RATIOCALCULATED 100 RATIOCALCULATED
+s GASMIXER Setting RATIOCALCULATED
+s GASMIXER On 1
+sleep 1
+s GASMIXER On 0
+s LEVER Open 0
+j waitlever

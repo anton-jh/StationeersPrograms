@@ -1,0 +1,51 @@
+alias displayMode d0
+alias displayFuel d1
+alias displaySilo d2
+alias rocket d3
+alias silo d4
+alias fuelPump d5
+
+define modeReady 4
+define modeTraveling 2
+define colorGray 1
+define colorGreen 2
+define colorOrange 3
+define colorRed 4
+
+
+s displayMode Mode 0
+s displayFuel Mode 0
+s displaySilo Mode 0
+
+loop:
+yield
+l r0 rocket Mode
+s displayMode Setting r0
+
+l r0 rocket Fuel
+s displayFuel Setting r0
+
+l r0 silo Quantity
+s displaySilo Setting r0
+
+l r0 fuelPump On
+select r0 r0 colorOrange colorGray
+s displayFuel Color r0
+
+l r0 silo Open
+select r0 r0 colorOrange colorGray
+s displaySilo Color r0
+
+l r0 rocket Mode
+seq r1 r0 modeReady
+seq r2 r0 modeTraveling
+or r0 r1 r2
+beqz r0 doNotCheckCollectableGoods
+l r0 rocket CollectableGoods
+select r0 r0 colorGreen colorRed
+s displayMode Color r0
+j loop
+doNotCheckCollectableGoods:
+s displayMode Color colorGray
+
+j loop
