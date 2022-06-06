@@ -54,5 +54,6 @@ blt r1 r0 printing
 
 stopPrinting:
 s printer Activate 0
+sleep 2
 s stacker Activate 1
 j idle
