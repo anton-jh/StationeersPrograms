@@ -1,0 +1,124 @@
+alias doorIntA d0
+alias doorIntB d1
+alias doorExtA d2
+alias doorExtB d3
+alias overrideA d4
+alias overrideB d5
+
+alias mode r12
+
+define deprPressure 0.5
+
+define cmdIdle 100
+define cmdDepr 110 # use this + mode
+define cmdPres 120 # use this + mode
+
+
+init:
+move mode 0
+jal _setDoors
+
+s doorIntA Mode 1
+s doorIntB Mode 1
+s doorExtA Mode 1
+s doorExtB Mode 1
+
+
+idle:
+jal _checkOverride
+yield
+
+l r0 doorIntA Open
+l r1 doorIntA Setting
+sub r0 r1 r0
+bgtz r0 cycleAirlock
+l r0 doorIntB Open
+l r1 doorIntB Setting
+sub r0 r1 r0
+bgtz r0 cycleAirlock
+l r0 doorExtA Open
+l r1 doorExtA Setting
+sub r0 r1 r0
+bgtz r0 cycleAirlock
+l r0 doorExtB Open
+l r1 doorExtB Setting
+sub r0 r1 r0
+bgtz r0 cycleAirlock
+
+j idle
+
+cycleAirlock:
+seqz mode mode
+
+jal _closeAllDoors
+
+add r0 cmdDepr mode
+s db Setting r0
+yield
+
+waitForDepr:
+jal _checkOverride
+yield
+l r0 db Setting
+beqz r0 waitForDepr
+
+add r0 cmdPres mode
+s db Setting r0
+yield
+
+waitForPres:
+jal _checkOverride
+yield
+l r0 db Setting
+beqz r0 waitForPres
+
+s db Setting cmdIdle
+sleep 1
+jal _setDoors
+j idle
+
+_setDoors:
+seqz r0 mode
+s doorIntA Open mode
+s doorIntB Open r0
+s doorExtA Open r0
+s doorExtB Open mode
+j ra
+
+_checkOverride:
+push ra
+jal _calculateOverrideStatus
+pop ra
+beqz r0 ra
+
+s db Setting cmdIdle
+overrideLoop:
+yield
+jal _calculateOverrideStatus
+
+beqz r0 init
+
+beq r0 2 overrideOpen
+jal _closeAllDoors
+j overrideLoop
+
+overrideOpen:
+s doorIntA Open 1
+s doorIntB Open 1
+s doorExtA Open 1
+s doorExtB Open 1
+
+j overrideLoop
+
+_closeAllDoors:
+s doorIntA Open 0
+s doorIntB Open 0
+s doorExtA Open 0
+s doorExtB Open 0
+j ra
+
+_calculateOverrideStatus:
+l r0 overrideA Setting
+l r1 overrideB Setting
+add r0 r0 r1
+j ra

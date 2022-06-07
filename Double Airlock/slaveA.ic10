@@ -1,0 +1,80 @@
+alias master d0
+alias ventIntA d1
+alias ventIntB d2
+alias ventExtA d3
+alias ventExtB d4
+
+define cmdIdle 100
+define cmdAtoExt 110
+define cmdAtoInt 111
+define cmdIntToA 120
+define cmdExtToA 121
+
+define extAintB 0
+define extBintA 1
+define pres 0
+define depr 1
+
+
+
+loop:
+yield
+
+l r0 master Setting
+beq r0 cmdIdle idle
+beq r0 cmdAtoExt aToExt
+beq r0 cmdAtoInt aToInt
+beq r0 cmdIntToA intToA
+beq r0 cmdExtToA extToA
+j loop
+
+
+idle:
+s ventIntA On 0
+s ventIntB On 0
+s ventExtA On 0
+s ventExtB On 0
+j loop
+
+
+aToExt:
+move r0 extAintB
+seqz r1 r0
+move r2 depr
+j setVents
+
+
+aToInt:
+move r0 extBintA
+seqz r1 r0
+move r2 depr
+j setVents
+
+
+intToA:
+move r0 extBintA
+seqz r1 r0
+move r2 pres
+j setVents
+
+
+extToA:
+move r0 extAintB
+seqz r1 r0
+move r2 pres
+
+
+setVents:
+s ventIntA Mode r2
+s ventIntA On r0
+
+s ventIntB Mode r2
+s ventIntB On r1
+
+s ventExtA Mode r2
+s ventExtA On r1
+
+s ventExtB Mode r2
+s ventExtB On r0
+
+j loop

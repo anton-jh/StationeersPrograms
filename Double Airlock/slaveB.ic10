@@ -1,0 +1,65 @@
+alias master d0
+alias sensorInt d1
+alias sensorExt d2
+alias sensorA d3
+alias sensorB d4
+
+alias lastCmd r8
+
+define cmdIdle 100
+define cmdAtoExt 110
+define cmdAtoInt 111
+define cmdIntToA 120
+define cmdExtToA 121
+
+define deprPressure 0.1
+
+
+move lastCmd cmdIdle
+
+
+loop:
+yield
+
+l r0 master Setting
+beq r0 cmdIdle loop
+beq r0 cmdAtoExt depr
+beq r0 cmdAtoInt depr
+beq r0 cmdIntToA intToA
+beq r0 cmdExtToA extToA
+j loop
+
+
+depr:
+l r0 sensorA Pressure
+l r1 sensorB Pressure
+add r0 r0 r1
+slt r0 r0 deprPressure
+s master Setting r0
+j loop
+
+
+intToA:
+l r0 sensorA Pressure
+l r1 sensorInt Pressure
+sgt r2 r0 r1
+
+l r0 sensorB Pressure
+l r1 sensorExt Pressure
+sgt r3 r0 r1
+
+and r0 r2 r3
+j loop
+
+
+extToA:
+l r0 sensorA Pressure
+l r1 sensorExt Pressure
+sgt r2 r0 r1
+
+l r0 sensorB Pressure
+l r1 sensorInt Pressure
+sgt r3 r0 r1
+
+and r0 r2 r3
+j loop
