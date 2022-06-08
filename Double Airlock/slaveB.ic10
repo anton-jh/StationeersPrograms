@@ -22,15 +22,24 @@ loop:
 yield
 
 l r0 master Setting
+
 beq r0 cmdIdle loop
 beq r0 cmdAtoExt depr
 beq r0 cmdAtoInt depr
 beq r0 cmdIntToA intToA
 beq r0 cmdExtToA extToA
+
+beq lastCmd cmdIdle loop
+beq lastCmd cmdAtoExt depr
+beq lastCmd cmdAtoInt depr
+beq lastCmd cmdIntToA intToA
+beq lastCmd cmdExtToA extToA
+
 j loop
 
 
 depr:
+move lastCmd cmdAtoExt
 l r0 sensorA Pressure
 l r1 sensorB Pressure
 add r0 r0 r1
@@ -40,6 +49,7 @@ j loop
 
 
 intToA:
+move lastCmd cmdIntToA
 l r0 sensorA Pressure
 l r1 sensorInt Pressure
 sgt r2 r0 r1
@@ -49,10 +59,12 @@ l r1 sensorExt Pressure
 sgt r3 r0 r1
 
 and r0 r2 r3
+s master Setting r0
 j loop
 
 
 extToA:
+move lastCmd cmdExtToA
 l r0 sensorA Pressure
 l r1 sensorExt Pressure
 sgt r2 r0 r1
@@ -62,4 +74,5 @@ l r1 sensorInt Pressure
 sgt r3 r0 r1
 
 and r0 r2 r3
+s master Setting r0
 j loop

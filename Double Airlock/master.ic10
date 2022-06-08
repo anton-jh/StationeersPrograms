@@ -15,6 +15,8 @@ define cmdPres 120 # use this + mode
 
 
 init:
+jal _closeAllDoors
+sleep 2
 move mode 0
 jal _setDoors
 
@@ -51,7 +53,7 @@ cycleAirlock:
 seqz mode mode
 
 jal _closeAllDoors
-
+sleep 1
 add r0 cmdDepr mode
 s db Setting r0
 yield
@@ -95,11 +97,13 @@ s db Setting cmdIdle
 overrideLoop:
 yield
 jal _calculateOverrideStatus
-
 beqz r0 init
-
 beq r0 2 overrideOpen
-jal _closeAllDoors
+s doorExtA Open 0
+s doorExtB Open 0
+sleep 2
+s doorIntA Open 1
+s doorIntB Open 1
 j overrideLoop
 
 overrideOpen:
@@ -107,18 +111,17 @@ s doorIntA Open 1
 s doorIntB Open 1
 s doorExtA Open 1
 s doorExtB Open 1
-
 j overrideLoop
+
+_calculateOverrideStatus:
+l r0 overrideA Setting
+l r1 overrideB Setting
+add r0 r0 r1
+j ra
 
 _closeAllDoors:
 s doorIntA Open 0
 s doorIntB Open 0
 s doorExtA Open 0
 s doorExtB Open 0
-j ra
-
-_calculateOverrideStatus:
-l r0 overrideA Setting
-l r1 overrideB Setting
-add r0 r0 r1
 j ra

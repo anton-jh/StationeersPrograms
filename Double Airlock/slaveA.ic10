@@ -10,8 +10,8 @@ define cmdAtoInt 111
 define cmdIntToA 120
 define cmdExtToA 121
 
-define extAintB 0
-define extBintA 1
+define extAintB 1
+define extBintA 0
 define pres 0
 define depr 1
 
