@@ -2,8 +2,8 @@ alias doorIntA d0
 alias doorIntB d1
 alias doorExtA d2
 alias doorExtB d3
-alias overrideA d4
-alias overrideB d5
+alias override d4
+alias slaveA d5
 
 alias mode r12
 
@@ -15,15 +15,20 @@ define cmdPres 120 # use this + mode
 
 
 init:
-jal _closeAllDoors
-sleep 2
-move mode 0
-jal _setDoors
-
+s doorIntA Setting 0
+s doorIntB Setting 0
+s doorExtA Setting 0
+s doorExtB Setting 0
 s doorIntA Mode 1
 s doorIntB Mode 1
 s doorExtA Mode 1
 s doorExtB Mode 1
+
+jal _checkOverride
+jal _closeAllDoors
+sleep 1
+move mode 0
+jal _setDoors
 
 
 idle:
@@ -51,11 +56,11 @@ j idle
 
 cycleAirlock:
 seqz mode mode
+s db Setting mode
 
 jal _closeAllDoors
-sleep 1
 add r0 cmdDepr mode
-s db Setting r0
+s slaveA Setting r0
 yield
 
 waitForDepr:
@@ -65,7 +70,7 @@ l r0 db Setting
 beqz r0 waitForDepr
 
 add r0 cmdPres mode
-s db Setting r0
+s slaveA Setting r0
 yield
 
 waitForPres:
@@ -74,50 +79,37 @@ yield
 l r0 db Setting
 beqz r0 waitForPres
 
-s db Setting cmdIdle
-sleep 1
+s slaveA Setting cmdIdle
 jal _setDoors
 j idle
 
+
 _setDoors:
 seqz r0 mode
-s doorIntA Open mode
-s doorIntB Open r0
-s doorExtA Open r0
-s doorExtB Open mode
+s doorIntA Open r0
+s doorIntB Open mode
+s doorExtA Open mode
+s doorExtB Open r0
 j ra
+
 
 _checkOverride:
-push ra
-jal _calculateOverrideStatus
-pop ra
+l r0 override Setting
 beqz r0 ra
 
-s db Setting cmdIdle
+s slaveA Setting cmdIdle
+jal _closeAllDoors
+s doorIntA Mode 0
+s doorIntB Mode 0
+s doorExtA Mode 0
+s doorExtB Mode 0
+
 overrideLoop:
 yield
-jal _calculateOverrideStatus
+l r0 override Setting
 beqz r0 init
-beq r0 2 overrideOpen
-s doorExtA Open 0
-s doorExtB Open 0
-sleep 2
-s doorIntA Open 1
-s doorIntB Open 1
 j overrideLoop
 
-overrideOpen:
-s doorIntA Open 1
-s doorIntB Open 1
-s doorExtA Open 1
-s doorExtB Open 1
-j overrideLoop
-
-_calculateOverrideStatus:
-l r0 overrideA Setting
-l r1 overrideB Setting
-add r0 r0 r1
-j ra
 
 _closeAllDoors:
 s doorIntA Open 0

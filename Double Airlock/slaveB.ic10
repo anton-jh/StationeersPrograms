@@ -1,8 +1,9 @@
 alias master d0
-alias sensorInt d1
-alias sensorExt d2
-alias sensorA d3
-alias sensorB d4
+alias slaveA d1
+alias sensorInt d2
+alias sensorExt d3
+alias sensorA d4
+alias sensorB d5
 
 alias lastCmd r8
 
@@ -21,7 +22,7 @@ move lastCmd cmdIdle
 loop:
 yield
 
-l r0 master Setting
+l r0 slaveA Setting
 
 beq r0 cmdIdle loop
 beq r0 cmdAtoExt depr
