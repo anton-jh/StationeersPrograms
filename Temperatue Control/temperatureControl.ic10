@@ -1,0 +1,43 @@
+alias coldValve d0
+alias hotValve d1
+alias tempDial d2
+
+alias mode r8
+alias setpoint r9
+alias temp r10
+alias min r11
+alias max r12
+
+define sensorHash -1252983604 # replace with real hash
+
+
+
+init:
+s coldValve On 0
+s hotValve On 0
+
+loop:
+yield
+
+l r0 tempDial Setting
+add setpoint r0 273.15
+sub min setpoint 1
+add max setpoint 1
+
+lb temp sensorHash Temperature Average
+
+slt r0 temp setpoint # if temp is less than setpoint
+sgtz r1 mode # and we're already heating
+and r0 r0 r1
+slt r2 temp min # or temp is less than minimum
+or r0 r2 r0
+s hotValve On r0
+
+sgt r0 temp setpoint # if temp is greater than setpoint
+sltz r1 mode # and we're already cooling
+and r0 r0 r1
+sgt r2 temp max # or temp is greater than maximum
+or r0 r2 r0
+s coldValve On r0
+
+j loop
