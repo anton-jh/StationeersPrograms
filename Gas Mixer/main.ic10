@@ -17,11 +17,15 @@ define desiredRatio 0.66
 define desiredPressure 10000
 
 
-main:
+loop:
+yield
 l r0 analyzerOut Pressure
-slt r0 r0 desiredPressure
-beqz r0 end
+sub r0 desiredPressure r0
+bgtz r0 continue
+s mixer On 0
+j loop
 
+continue:
 l temp1 analyzer1 Temperature
 l temp2 analyzer2 Temperature
 
@@ -35,7 +39,4 @@ mul calculatedRatio 100 calculatedRatio
 s mixer Setting calculatedRatio
 s mixer On 1
 
-end:
-yield
-s mixer On 0
-j main
+j loop
