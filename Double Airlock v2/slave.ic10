@@ -10,7 +10,7 @@ define cmdIdle 0
 define cmdDepr 10
 define cmdPres 20
 
-define presMargin 1.001
+define presMargin 1.01
 define deprLimit 0.01
 
 
@@ -43,8 +43,8 @@ waitPres:
 bgtz r0 presToExt
 
 l r2 sensorInt Pressure
-mul r2 r2 presMargin
-s ventInt PressureExternal r2
+mul r3 r2 presMargin
+s ventInt PressureExternal r3
 
 l r4 sensor Pressure
 bge r4 r2 idle
@@ -55,8 +55,8 @@ j waitPres
 
 presToExt:
 l r2 sensorExt Pressure
-mul r2 r2 presMargin
-s ventExt PressureExternal r2
+mul r3 r2 presMargin
+s ventExt PressureExternal r3
 
 l r4 sensor Pressure
 bge r4 r2 idle
