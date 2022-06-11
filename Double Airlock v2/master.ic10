@@ -1,0 +1,106 @@
+alias doorInt d0
+alias doorExt d1
+alias slave d2
+alias sibling d3
+alias override d4
+
+alias mode r8
+
+define cmdIdle 0
+define cmdDepr 10
+define cmdPres 20
+
+
+
+init:
+s doorInt Setting 0
+s doorExt Setting 0
+s doorInt Mode 1
+s doorExt Mode 1
+
+jal _checkOverride
+jal _closeAllDoors
+sleep 1
+move mode 0
+jal _setDoors
+
+
+idle:
+jal _checkOverride
+yield
+
+l r0 doorInt Open
+l r1 doorInt Setting
+sub r0 r1 r0
+bgtz r0 cycleAirlock
+l r0 doorExt Open
+l r1 doorExt Setting
+sub r0 r1 r0
+bgtz r0 cycleAirlock
+l r0 db Setting
+sne r0 r0 mode
+bgtz r0 cycleAirlock
+j idle
+
+
+cycleAirlock:
+brdns sibling 2
+s sibling Setting mode
+seqz mode mode
+
+jal _closeAllDoors
+add r0 cmdDepr mode
+s slave Setting r0
+yield
+
+waitForDepr:
+jal _checkOverride
+yield
+l r0 slave Setting
+bnez r0 waitForDepr
+
+add r0 cmdPres mode
+s slave Setting r0
+yield
+
+waitForPres:
+jal _checkOverride
+yield
+l r0 slave Setting
+bnez r0 waitForPres
+
+s slave Setting cmdIdle
+jal _setDoors
+j idle
+
+
+
+_setDoors:
+seqz r0 mode
+s doorInt Open r0
+s doorExt Open mode
+j ra
+
+
+_checkOverride:
+l r0 override Setting
+beqz r0 ra
+
+s slave Setting cmdIdle
+sleep 1
+s slave Setting cmdIdle
+jal _closeAllDoors
+s doorInt Mode 0
+s doorExt Mode 0
+
+overrideLoop:
+yield
+l r0 override Setting
+beqz r0 init
+j overrideLoop
+
+
+_closeAllDoors:
+s doorInt Open 0
+s doorExt Open 0
+j ra

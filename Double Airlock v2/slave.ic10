@@ -1,0 +1,91 @@
+alias ventInt d0
+alias ventExt d1
+alias sensorInt d2
+alias sensorExt d3
+alias sensor d4
+
+alias mode r8
+
+define cmdIdle 0
+define cmdDepr 10
+define cmdPres 20
+
+define presMargin 1.001
+define deprLimit 0.01
+
+
+
+loop:
+yield
+l r0 db Setting
+beq r0 cmdIdle idle
+bge r0 cmdPres pres
+bge r0 cmdDepr depr
+j loop
+
+
+idle:
+s ventInt On 0
+s ventExt On 0
+s db Setting cmdIdle
+j loop
+
+
+pres:
+sub r0 r0 cmdPres # mode
+seqz r1 r0 # !mode
+s ventInt Mode 0
+s ventExt Mode 0
+s ventInt On r1
+s ventExt On r0
+
+waitPres:
+bgtz r0 presToExt
+
+l r2 sensorInt Pressure
+mul r2 r2 presMargin
+s ventInt PressureExternal r2
+
+l r4 sensor Pressure
+bge r4 r2 idle
+
+yield
+j waitPres
+
+
+presToExt:
+l r2 sensorExt Pressure
+mul r2 r2 presMargin
+s ventExt PressureExternal r2
+
+l r4 sensor Pressure
+bge r4 r2 idle
+
+yield
+j waitPres
+
+
+
+depr:
+sub r0 r0 cmdDepr # mode
+seqz r1 r0 # !mode
+s ventInt Mode 1
+s ventExt Mode 1
+s ventInt On r0
+s ventExt On r1
+
+waitForDepr:
+yield
+l r2 sensor Pressure
+ble r2 deprLimit idle
+j waitForDepr
+
+
+
+
+
+_checkOverride:
+l r0 db Setting
+bnez r0 ra
+
+j idle
