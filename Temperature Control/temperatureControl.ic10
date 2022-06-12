@@ -1,5 +1,5 @@
-alias coldValve d0
-alias hotValve d1
+alias cooler d0
+alias heater d1
 alias tempDial d2
 
 alias setpoint r8
@@ -7,13 +7,13 @@ alias temp r9
 alias min r10
 alias max r11
 
-define sensorHash -1252983604 # replace with real hash
+define sensorHash -1252983604
 
 
 
 init:
-s coldValve On 0
-s hotValve On 0
+s cooler On 0
+s heater On 0
 
 loop:
 yield
@@ -25,18 +25,21 @@ add max setpoint 1
 
 lb temp sensorHash Temperature Average
 
+bdns heater cooling
 slt r0 temp setpoint # if temp is less than setpoint
-l r1 hotValve On
+l r1 heater On
 and r0 r0 r1 # and we're already heating
 slt r2 temp min
 or r0 r2 r0 # or temp is less than minimum
-s hotValve On r0
+s heater On r0
 
+cooling:
+bdns cooler loop
 sgt r0 temp setpoint # if temp is greater than setpoint
-l r1 coldValve On
+l r1 cooler On
 and r0 r0 r1 # and we're already cooling
 sgt r2 temp max
 or r0 r2 r0 # or temp is greater than maximum
-s coldValve On r0
+s cooler On r0
 
 j loop
