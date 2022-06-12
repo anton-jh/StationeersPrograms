@@ -1,0 +1,34 @@
+alias gasSensor d0
+alias radiatorValve d1
+alias purgePump d2
+alias pipeAnalyzer d3
+
+define activeVentHash -1129453144
+define maxPressure 10000
+define maxTempOutside 210
+define maxTempTank 220
+
+
+
+init:
+sb activeVentHash Mode 1
+sb activeVentHash PressureInternal maxPressure
+
+
+loop:
+yield
+l r0 gasSensor Temperature
+
+slt r1 r0 maxTempOutside
+sb activeVentHash On r1
+
+l r2 pipeAnalyzer Temperature
+slt r3 r1 r2
+and r3 r3 r1
+s radiatorValve On r3
+
+sgt r4 r2 maxTempTank
+and r4 r4 r1
+s purgePump On r4
+
+j loop
