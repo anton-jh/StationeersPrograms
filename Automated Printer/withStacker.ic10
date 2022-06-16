@@ -4,6 +4,7 @@ alias triggerPlate d2
 alias stacker d3
 
 alias idleTime r8
+alias printQuantity r9
 
 
 define maxIdleTime 30
@@ -41,19 +42,27 @@ j standby
 
 startCounting:
 s printer ClearMemory 1
+l printQuantity dial Setting
 
 printing:
 yield
 l r0 printer Activate
 beqz r0 stopPrinting
-l r0 dial Setting
-beqz r0 printing
-l r1 printer ExportCount
-blt r1 r0 printing
+beqz printQuantity printing
+l r0 printer ExportCount
+sub r1 printQuantity r0
+s dial Setting r1
+beqz r1 printing
 
 
 stopPrinting:
 s printer Activate 0
+s dial Setting 1
 sleep 2
 s stacker Activate 1
 j idle
+
+# changenotes:
+#   made so that the dial decreases as items are printed.
+# todo:
+#   maybe make it possible to change the dial manually as the printing progresses?
