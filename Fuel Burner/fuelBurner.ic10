@@ -1,0 +1,45 @@
+alias fuelPump d0
+alias pipeAnalyzer d1
+alias pipeHeater d2
+alias purgePump d3
+alias outputValve d4
+alias tempDial d5
+
+alias pressure r8
+alias temp r9
+alias desiredTemp r10
+alias canIgnite r11
+alias temperatureLow r12
+alias pressureHigh r13
+alias pressureLow r14
+
+define fuelPressure 500
+define maxPressure 5000
+define combustionTemp 324
+define desiredTempMult 100
+
+
+loop:
+l r0 pipeAnalyzer Temperature
+l r1 tempDial Setting
+mul r1 r1 desiredTempMult
+slt temperatureLow r0 r1
+sgt canIgnite r0 combustionTemp
+
+l r0 pipeAnalyzer Pressure
+sgt pressureHigh r0 maxPressure
+slt pressureLow r0 fuelPressure
+
+s fuelPump On pressureLow
+
+or r0 temperatureLow pressureHigh
+and r0 r0 canIgnite
+seqz r1 pressureLow
+and r0 r0 r1
+s purgePump On r0
+
+seqz r0 canIgnite
+s pipeHeater On r0
+s outputValve On canIgnite
+
+j loop
