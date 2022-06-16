@@ -14,7 +14,7 @@ alias calculatedRatio r10
 alias active r11
 
 define desiredRatio 0.66
-define desiredPressure 10000
+define desiredPressure 1000
 
 
 loop:
