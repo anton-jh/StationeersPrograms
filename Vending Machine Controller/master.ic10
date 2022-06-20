@@ -1,0 +1,26 @@
+alias vendingMachine d0
+alias stacker d1
+alias sorter d2
+alias dial d3
+alias button d4
+alias display d5
+
+alias requestHash r8
+alias amountAvailable r9
+alias requestAmount r10
+
+define typeCount 10
+
+move sp 0
+push 1724793494  # Coal
+push 1758427767  # Iron
+push -707307845  # Copper
+push 1103972403  # Silicon
+push -190236170  # Lead
+push 1830218956  # Nickel
+push -916518678  # Silver
+push -1348105509 # Gold
+push -983091249  # Cobalt
+push -1516581844 # Uranium
+
+

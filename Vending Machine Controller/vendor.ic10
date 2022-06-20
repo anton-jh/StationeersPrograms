@@ -1,0 +1,49 @@
+alias vendingMachine d0
+alias stacker d1
+alias sorter d2
+
+alias requestHash r8
+alias requestAmount r9
+alias partialAmount r10
+
+define sorterOut 0
+define sorterReturn 1
+
+
+s stacker Mode 1
+s sorter Mode 2
+
+reset:
+s db Setting 0
+idle:
+yield
+l r0 db Setting
+beqz r0 idle
+
+trunc requestHash r0
+sub r1 r0 requestHash
+mul requestAmount r1 1000
+
+vendingLoop:
+min partialAmount requestAmount 50
+s stacker Setting partialAmount
+fillStacker:
+ls r0 stacker 2 Quantity
+bge r0 partialAmount skipFillStacker
+s vendingMachine RequestHash requestHash
+ls r1 stacker 2 Quantity
+breq r1 r0 -1
+blt r1 partialAmount fillStacker
+skipFillStacker:
+s stacker Output 1
+s sorter Output sorterOut
+l r0 sorter Output
+brne r0 -1 -1
+sub requestAmount requestAmount partialAmount
+bgtz requestAmount vendingLoop
+
+ls r0 stacker 2 Occupied
+beqz r0 reset
+s stacker Output 1
+s sorter Output sorterReturn # don't think I need to wait here
+j reset

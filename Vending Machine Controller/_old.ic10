@@ -1,0 +1,127 @@
+alias vendingMachine d0
+alias dial d1
+alias button d2
+alias stacker d3
+alias sorter d4
+alias silo d5
+move sp 0
+push 1724793494  # Coal     typeCount=10
+push 1758427767  # Iron
+push -707307845  # Copper
+push 1103972403  # Silicon
+push -190236170  # Lead
+push 1830218956  # Nickel
+push -916518678  # Silver
+push -1348105509 # Gold
+push -983091249  # Cobalt
+push -1516581844 # Uranium
+reset:
+s sorter Mode 2
+s dial Mode 10 # max value = number of item types (setting 0 is reserved for starting defragmentation) typeCount=10
+yield
+s dial Setting 1
+idle:
+l r0 dial Setting
+breqz r0 4 # to l r1 button Setting
+move sp r0 # sp=1 will peek index 0
+peek r8
+s db Setting r8 # for hash display to read
+l r1 button Setting
+beqz r1 idle
+beqz r0 defrag
+move r0 1 # first storage slot in vending machine - 1
+move r9 0 # total
+countItems:
+add r0 r0 1
+brgt r0 101 6 # to min r0 r9 50
+ls r1 vendingMachine r0 OccupantHash
+bne r1 r8 countItems
+ls r1 vendingMachine r0 Quantity
+add r9 r9 r1
+j countItems
+
+min r0 r9 50
+s dial Mode r9
+yield
+s dial Setting r0
+l r10 dial Setting
+l r0 button Setting
+breqz r0 -2 # to l r10 ...
+beqz r10 reset
+s stacker Mode 1
+s silo Open 1
+outputLoop:
+yield
+min r11 r10 50
+s stacker Setting r11
+fillStacker:
+ls r1 stacker 2 Quantity
+bge r1 r11 skipFillStacker
+s vendingMachine RequestHash r8
+ls r2 stacker 2 Quantity
+brle r2 r1 -1 # jump to ls r2 stacker ...
+blt r2 r11 fillStacker
+skipFillStacker:
+s stacker Output 1
+l r16 sorter Output
+brgez r16 -1
+s sorter Output 0
+sub r10 r10 r11
+bgtz r10 outputLoop
+ls r0 stacker 2 Quantity
+beqz r0 reset
+sleep 3
+s stacker Setting 50
+s stacker Activate 1
+l r16 sorter Output
+brgez r16 -1
+s sorter Output 1
+j reset
+defrag:
+s stacker Mode 0 # to automatically output full stacks
+s stacker Setting 50
+s silo Open 0
+s stacker ClearMemory 1
+s silo ClearMemory 1
+move sp 0
+defragNextType:
+add sp sp 1
+bgt sp 10 defragCleanup # typeCount=10
+peek r12
+move r0 1 # first storage slot in vending machine - 1
+move r1 0 # number of partial stacks
+move r2 0 # number of items in partial stacks
+move r3 0 # number of stacks (total for type)
+defragNextSlot:
+add r0 r0 1
+bge r0 101 defragNextType
+ls r4 vendingMachine r0 OccupantHash
+bne r4 r12 defragNextType
+add r3 r3 1
+ls r4 vendingMachine r0 Quantity
+beq r4 50 defragNextSlot
+add r1 r1 1
+add r2 r2 r4
+j defragNextSlot
+blt r1 2 defragNextType
+div r4 r2 50
+trunc r4 r4
+bge r4 r1 defragNextType
+defragMain:
+yield
+s vendingMachine RequestHash r12
+s sorter Output 1
+sub r3 r3 1
+beqz r3 defragNextType
+j defragMain
+defragCleanup:
+s silo Open 1
+sleep 1
+s stacker Activate 1 # force empty the stacker
+l r0 stacker ExportCount
+s sorter Output 1
+l r1 sorter ImportCount
+brlt r1 r0 -2 # to s sorter Output 1
+l r1 silo ExportCount
+brlt r1 r0 -1 # to l r1 silo ExportCount
+j reset
