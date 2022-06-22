@@ -1,0 +1,103 @@
+alias vendingMachine d0
+alias stacker d1
+alias sorter d2
+alias returnSilo d3
+alias importSilo d4
+
+alias requestHash r8
+alias requestAmount r9
+alias requestDestination r10
+alias partialAmount r11
+alias defragSlot r12
+alias defragStacks r13
+alias defragUnits r14
+
+define sorterOut 0
+define sorterReturn 1
+
+
+s stacker Mode 1
+s sorter Mode 2
+
+reset:
+s db Setting 0
+idle:
+yield
+l r0 db Setting
+seqz r1 r0
+s importSilo Open r1
+beqz r0 idle
+beq r0 1 idle
+
+trunc requestHash r0
+sub r1 r0 requestHash
+mul requestAmount r1 1000
+breqz requestAmount defrag
+move requestDestination sorterOut
+
+jal _vend
+jal _emptyStacker
+j reset
+
+
+defrag:
+s returnSilo Open 0
+s returnSilo ClearMemory 1
+move defragSlot 1 # first slot -1
+
+defragCheckNextSlot:
+add defragSlot defragSlot 1
+bgt defragSlot 101 defragCleanup
+ls r0 vendingMachine defragSlot OccupantHash
+bne r0 requestHash defragCheckNextSlot
+ls r1 vendingMachine defragSlot Quantity
+add defragStacks defragStacks 1
+add defragUnits defragUnits r1
+j defragCheckNextSlot
+
+div r0 defragUnits 50
+ceil r0 r0
+beq defragStacks r0 reset
+
+move requestAmount defragUnits
+move requestDestination sorterReturn
+
+jal _vend
+jal _emptyStacker
+
+s returnSilo Open 1
+emptySilo:
+yield
+l r0 returnSilo ImportCount
+l r1 returnSilo ExportCount
+bne r0 r1 emptySilo
+j reset
+
+
+
+_vend:
+min partialAmount requestAmount 50
+s stacker Setting partialAmount
+fillStacker:
+ls r0 stacker 2 Quantity
+bge r0 partialAmount skipFillStacker
+s vendingMachine RequestHash requestHash
+ls r1 stacker 2 Quantity
+breq r1 r0 -1
+blt r1 partialAmount fillStacker
+skipFillStacker:
+s stacker Output 1
+s sorter Output requestDestination
+l r0 sorter Output
+brne r0 -1 -1
+sub requestAmount requestAmount partialAmount
+bgtz requestAmount _vend
+j ra
+
+
+_emptyStacker:
+ls r0 stacker 2 Occupied
+beqz r0 ra
+s stacker Output 1
+s sorter Output sorterReturn # don't think I need to wait here
+j ra

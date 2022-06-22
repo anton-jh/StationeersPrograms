@@ -1,26 +1,126 @@
-alias vendingMachine d0
-alias stacker d1
-alias sorter d2
-alias dial d3
-alias button d4
-alias display d5
+alias slave d0
+alias dial d1
+alias button d2
+alias display d3
+alias vendingMachine d4
+alias sorter d5
 
-alias requestHash r8
-alias amountAvailable r9
-alias requestAmount r10
+alias hash r8
+alias quantity r9
+alias lastIndex r10
+alias typeCount r11
 
-define typeCount 10
-
-move sp 0
-push 1724793494  # Coal
-push 1758427767  # Iron
-push -707307845  # Copper
-push 1103972403  # Silicon
-push -190236170  # Lead
-push 1830218956  # Nickel
-push -916518678  # Silver
-push -1348105509 # Gold
-push -983091249  # Cobalt
-push -1516581844 # Uranium
+define sorterReturn 1
 
 
+reset:
+s dial Mode typeCount
+s dial Setting 1
+s display Color 2
+s slave Setting 0
+
+idleLoop:
+yield
+
+ls r0 sorter 0 Occupied
+bnezal r0 _importStack
+
+l r0 dial Setting
+beqz r0 stageInventoryCheck
+beq r0 lastIndex lookupEnd
+mul sp r0 2
+sub sp sp 1
+peek hash
+add sp sp 1
+peek quantity
+s display Setting quantity
+s db Setting hash
+j lookupEnd
+stageInventoryCheck:
+s db Setting 0
+s display Setting 0
+lookupEnd:
+l r1 button Setting
+beqz r1 idleLoop
+beqz r0 checkInventory
+
+s display Color 0
+s dial Mode quantity
+min r0 quantity 50
+s dial Setting r0
+s slave Setting 1
+
+awaitAmount:
+yield
+l quantity dial Setting
+l r0 button Setting
+beqz r0 awaitAmount
+s display Color 3
+
+move r0 4
+emptyImportLoop:
+yield
+ls r1 sorter 0 Occupied
+bnezal r1 _importStack
+sub r0 r0 1
+bgtz r0 emptyImportLoop
+
+div r0 quantity 1000
+add r0 hash r0
+s slave Setting r0
+
+jal _awaitSlave
+j reset
+
+checkInventory:
+move typeCount 0
+move r0 1
+nextSlotLoop:
+add r0 r0 1
+ls r1 vendingMachine r0 Occupied
+beqz r1 nextSlotLoop
+ls hash vendingMachine r0 OccupantHash
+ls quantity vendingMachine r0 Quantity
+jal _record
+blt r0 101 nextSlotLoop
+
+defrag:
+move sp -1
+defragLoop:
+add sp sp 2
+peek r0
+beqz r0 reset
+s slave Setting r0
+jal _awaitSlave
+j defragLoop
+
+
+_importStack:
+ls hash sorter 0 OccupantHash
+ls quantity sorter 0 Quantity
+s sorter Output sorterReturn
+jal _record
+j ra
+
+_record:
+move sp -1
+findHash:
+add sp sp 2
+peek r4
+beqz r4 addHash
+bne r4 hash findHash
+push quantity
+j ra
+addHash:
+add typeCount typeCount 1
+sub sp sp 1
+push hash
+push quantity
+push 0
+j ra
+
+_awaitSlave:
+yield
+l r4 slave Setting
+bnez r4 _awaitSlave
+j ra
