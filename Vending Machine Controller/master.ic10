@@ -12,7 +12,6 @@ alias typeCount r11
 
 define sorterReturn 1
 
-
 reset:
 s dial Mode typeCount
 s dial Setting 1
@@ -66,9 +65,11 @@ sub r0 r0 1
 bgtz r0 emptyImportLoop
 
 div r0 quantity 1000
+sltz r1 hash
+select r1 r1 -1 1
+mul r0 r0 r1
 add r0 hash r0
 s slave Setting r0
-
 jal _awaitSlave
 j reset
 
@@ -77,6 +78,7 @@ move typeCount 0
 move r0 1
 nextSlotLoop:
 add r0 r0 1
+bgt r0 101 defrag
 ls r1 vendingMachine r0 Occupied
 beqz r1 nextSlotLoop
 ls hash vendingMachine r0 OccupantHash
@@ -93,7 +95,6 @@ beqz r0 reset
 s slave Setting r0
 jal _awaitSlave
 j defragLoop
-
 
 _importStack:
 ls hash sorter 0 OccupantHash

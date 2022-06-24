@@ -21,6 +21,7 @@ s sorter Mode 2
 
 reset:
 s db Setting 0
+s returnSilo Open 1
 idle:
 yield
 l r0 db Setting
@@ -32,6 +33,8 @@ beq r0 1 idle
 trunc requestHash r0
 sub r1 r0 requestHash
 mul requestAmount r1 1000
+round requestAmount requestAmount
+abs requestAmount requestAmount
 breqz requestAmount defrag
 move requestDestination sorterOut
 
@@ -47,13 +50,14 @@ move defragSlot 1 # first slot -1
 
 defragCheckNextSlot:
 add defragSlot defragSlot 1
-bgt defragSlot 101 defragCleanup
+bgt defragSlot 101 defragLoopEnd
 ls r0 vendingMachine defragSlot OccupantHash
 bne r0 requestHash defragCheckNextSlot
 ls r1 vendingMachine defragSlot Quantity
 add defragStacks defragStacks 1
 add defragUnits defragUnits r1
-j defragCheckNextSlot
+blt defragSlot 101 defragCheckNextSlot
+defragLoopEnd:
 
 div r0 defragUnits 50
 ceil r0 r0
