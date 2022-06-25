@@ -1,0 +1,91 @@
+alias vendingMachine d0
+alias stacker d1
+alias sorter d2
+alias dial d3
+alias button d4
+alias display d5
+
+alias requestHash r8
+alias availableAmount r9
+alias requestQuantity r10
+alias partialRequestQuantity r11
+
+define typeDialMaxValue 9
+define sorterOut 1 # TODO: verify
+define sorterReturn 0 # TODO: verify
+
+move sp 0
+push 1724793494 # Coal
+push 1758427767 # Iron
+push -707307845 # Copper
+push 1103972403 # Silicon
+push -190236170 # Lead
+push 1830218956 # Nickel
+push -916518678 # Silver
+push -1348105509 # Gold
+push -983091249 # Cobalt
+push -1516581844 # Uranium
+
+s stacker Mode 1 # TODO: verify
+s sorter Mode 2 # TODO: verify
+
+
+reset:
+s dial Mode typeDialMaxValue
+s display Setting 0
+s display Color 6
+
+idle:
+yield
+l sp dial Setting
+add sp sp 1
+peek requestHash
+s db Setting requestHash
+l r0 button Setting
+beqz r0 idle
+
+move r0 1
+move availableAmount 0
+countNextSlot:
+add r0 r0 1
+bgt r0 101 awaitAmount
+ls r1 vendingMachine r0 Occupied
+beqz r1 countNextSlot
+ls r1 vendingMachine r0 OccupantHash
+bne r1 requestHash countNextSlot
+ls r1 vendingMachine r0 Quantity
+add availableAmount availableAmount r1
+blt r0 101 countNextSlot
+s display Setting availableAmount
+s display Color 0
+
+awaitAmount:
+yield
+l requestQuantity dial Setting
+l r0 button Setting
+beqz r0 awaitAmount
+beqz requestQuantity reset
+
+s display Color 3
+vendingLoop:
+s display Setting requestQuantity
+min partialRequestQuantity requestQuantity 50
+fillStacker:
+ls r0 stacker 2 Quantity
+bge r0 partialRequestQuantity fillStackerEnd
+s vendingMachine RequestHash requestHash
+ls r1 stacker 2 Quantity
+breq r1 r0 -1
+blt r1 partialRequestQuantity fillStacker
+fillStackerEnd:
+l r0 sorter Output
+brne r0 -1 -1
+s stacker Output 1
+s sorter Output sorterOut
+sub requestQuantity requestQuantity partialRequestQuantity
+bgtz requestQuantity vendingLoop
+l r0 sorter Output
+brne r0 -1 -1
+s stacker Activate 1
+s sorter Output sorterReturn
+j reset
