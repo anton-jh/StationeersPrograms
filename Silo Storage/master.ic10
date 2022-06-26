@@ -1,0 +1,80 @@
+alias stacker d0
+alias sorter d1
+alias dial d2
+alias button d3
+alias display d5
+
+alias hash r8
+alias availableAmount r9
+alias requestQuantity r10
+alias partialRequestQuantity r11
+
+define sorterOut 0
+define sorterReturn 1
+define typeDialMaxValue 9
+
+move sp 0
+push 1724793494 # Coal
+push 1758427767 # Iron
+push -707307845 # Copper
+push 1103972403 # Silicon
+push -190236170 # Lead
+push 1830218956 # Nickel
+push -916518678 # Silver
+push -1348105509 # Gold
+push -983091249 # Cobalt
+push -1516581844 # Uranium
+
+
+s stacker Mode 1
+s sorter Mode 2
+
+reset:
+s display Color 6
+s dial Mode typeDialMaxValue
+
+idleLoop:
+yield
+l r0 dial Setting
+add sp r0 1
+peek hash
+s db Setting hash
+
+l r0 button Setting
+beqz r0 idleLoop
+
+l availableAmount display Setting
+s dial Mode availableAmount
+min r0 availableAmount 50
+s dial Setting r0
+s display Color 0
+
+awaitAmountLoop:
+yield
+l r0 button Setting
+beqz r0 awaitAmountLoop
+
+s display Color 3
+l requestQuantity dial Setting
+beqz requestQuantity reset
+
+div r0 requestQuantity 50
+ceil r0 r0
+s db Setting r0
+
+min partialRequestQuantity requestQuantity 50
+awaitFillStacker:
+yield
+ls r0 stacker 2 Quantity
+blt r0 partialRequestQuantity awaitFillStacker
+
+s stacker Output 1
+s sorter Output sorterOut
+sub requestQuantity requestQuantity partialRequestQuantity
+bgtz requestQuantity awaitFillStacker
+
+ls r0 stacker 2 Occupied
+beqz r0 reset
+s stacker Activate 1
+s sorter Output sorterReturn
+j reset
