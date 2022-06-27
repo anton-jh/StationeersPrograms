@@ -2,7 +2,7 @@ alias stacker d0
 alias sorter d1
 alias dial d2
 alias button d3
-alias display d5
+alias display d4
 
 alias hash r8
 alias availableAmount r9
@@ -27,11 +27,17 @@ push -1516581844 # Uranium
 
 
 s stacker Mode 1
+s stacker Lock 1
+s stacker On 1
 s sorter Mode 2
+s sorter On 1
+s display Mode 0
 
 reset:
 s display Color 6
 s dial Mode typeDialMaxValue
+s dial Setting 0
+s display Color 6
 
 move r1 -1
 idleLoop:
@@ -52,16 +58,16 @@ bltz r0 idleLoop
 
 l availableAmount display Setting
 s dial Mode availableAmount
+yield
 min r0 availableAmount 50
 s dial Setting r0
-s display Color 0
+s display Color 2
 
 awaitAmountLoop:
 yield
 l r0 button Setting
 beqz r0 awaitAmountLoop
 
-s display Color 3
 l requestQuantity dial Setting
 beqz requestQuantity reset
 
@@ -69,19 +75,31 @@ div r0 requestQuantity 50
 ceil r0 r0
 s db Setting r0
 
+s display Color 3
+s display Setting requestQuantity
+vendingLoop:
+yield
 min partialRequestQuantity requestQuantity 50
-awaitFillStacker:
+s stacker Setting partialRequestQuantity
+fillStacker:
 yield
 ls r0 stacker 2 Quantity
-blt r0 partialRequestQuantity awaitFillStacker
+blt r0 partialRequestQuantity fillStacker
 
-s stacker Output 1
+l r0 sorter Output
+brne r0 -1 -1
+yield
 s sorter Output sorterOut
+s stacker Output 1
 sub requestQuantity requestQuantity partialRequestQuantity
-bgtz requestQuantity awaitFillStacker
+bgtz requestQuantity vendingLoop
 
+yield
 ls r0 stacker 2 Occupied
 beqz r0 reset
-s stacker Activate 1
+l r0 sorter Output
+brne r0 -1 -1
+yield
 s sorter Output sorterReturn
+s stacker Activate 1
 j reset

@@ -12,9 +12,18 @@ alias requestStackCount r10
 
 
 s sorter Mode 2
+s sorter On 1
 s stacker Mode 0
+s stacker Setting 50
+s stacker Lock 1
+s stacker On 1
+s silo Lock 1
+s silo Open 0
+s silo On 1
 
 
+reset:
+move selected 0
 
 idleLoop:
 yield
@@ -54,7 +63,12 @@ l r0 silo ExportCount
 blt r0 requestStackCount exportLoop
 
 s silo Open 0
-j idleLoop
+awaitRequestEnd:
+yield
+l r0 master Setting
+blt r0 1 reset
+bgt r0 601 reset
+j awaitRequestEnd
 
 
 
