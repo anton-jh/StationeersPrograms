@@ -1,14 +1,13 @@
 alias sorter d0
 alias stacker d1
 alias silo d2
-alias memory d3
-alias master d4
-alias display d5
+alias master d3
+alias quantityDisplay d4
+alias commonDisplay d5
 
 alias myHash r8
 alias selected r9
 alias requestStackCount r10
-alias siloStackCount r11
 
 
 
@@ -19,8 +18,9 @@ s stacker Mode 0
 
 idleLoop:
 yield
-l myHash memory Setting
+l myHash db Setting
 
+jal _count
 jal _checkSorter
 
 l r0 master Setting
@@ -33,19 +33,16 @@ checkHash:
 seq selected r0 myHash
 beqz selected idleLoop
 
-l r0 silo Quantity
-mul r0 r0 50
-ls r1 stacker 2 Quantity
-add r0 r0 r1
-s display Setting r0
+l r0 quantityDisplay Setting
+s commonDisplay Setting r0
 
 j idleLoop
 
 
 export:
 move requestStackCount r0
-l siloStackCount silo Quantity
-brle requestStackCount siloStackCount 2
+l r0 silo Quantity
+brle requestStackCount r0 2
 s stacker Activate 1
 
 s silo ClearMemory 1
@@ -67,4 +64,13 @@ beqz r0 ra
 ls r0 sorter 0 OccupantHash
 seq r0 r0 myHash
 s sorter Output r0
+j ra
+
+
+_count:
+l r0 silo Quantity
+mul r0 r0 50
+ls r1 stacker 2 Quantity
+add r0 r0 r1
+s quantityDisplay Setting r0
 j ra

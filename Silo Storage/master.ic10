@@ -33,15 +33,22 @@ reset:
 s display Color 6
 s dial Mode typeDialMaxValue
 
+move r1 -1
 idleLoop:
 yield
 l r0 dial Setting
+beq r0 r1 idleSkipLoadHash
+move r1 r0
 add sp r0 1
 peek hash
 s db Setting hash
+s display Setting -1
+idleSkipLoadHash:
 
-l r0 button Setting
-beqz r0 idleLoop
+l r2 button Setting
+beqz r2 idleLoop
+l r0 display Setting
+bltz r0 idleLoop
 
 l availableAmount display Setting
 s dial Mode availableAmount
