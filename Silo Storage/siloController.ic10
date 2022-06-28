@@ -20,6 +20,8 @@ s stacker On 1
 s silo Lock 1
 s silo Open 0
 s silo On 1
+s quantityDisplay Mode 0
+s quantityDisplay Color 2
 
 
 reset:
@@ -65,6 +67,7 @@ blt r0 requestStackCount exportLoop
 s silo Open 0
 awaitRequestEnd:
 yield
+jal _checkSorter
 l r0 master Setting
 blt r0 1 reset
 bgt r0 601 reset
