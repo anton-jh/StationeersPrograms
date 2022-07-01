@@ -13,7 +13,6 @@ alias available r9
 define sorterOut 0
 define sorterReturn 1
 
-
 move sp 0
 push 1724793494 # Coal
 push 0
@@ -36,91 +35,90 @@ push 0
 push -1516581844 # Uranium
 push 0
 
+s stacker Mode 1
+s stacker On 1
+s sorter Mode 2
+s sorter On 1
+s display Mode 0
+s typeDial Mode 9
+move hashIndex -1
 
 main:
+s stacker Activate 0
+s sorter Output -1
 yield
 
-jal _checkHash
-jal _checkQuantity
-jal _checkConfirm
-jal _checkStacker
-
-j main
-
-
-
-_checkHash:
 l r0 typeDial Setting
+mul r0 r0 2
 add r0 r0 1
-beq r0 hashIndex ra
+beq r0 hashIndex hashEnd # skip if hashIndex is unchanged
 move hashIndex r0
-add sp r0 1
+move sp hashIndex
 peek hash
 s display Setting -1
+s quantityDial Setting 0
 s db Setting hash
-move available -1
-j ra
+move quantity -1
+hashEnd:
 
-
-_checkQuantity:
 l available display Setting
-bltz available ra
-bgez quantity _checkQuantity_refresh
+bltz available quantityEnd
+bgez quantity quantityRefresh # skip if quantity is already set
 s quantityDial Mode available
 yield # annoying
 min r0 available 50
-s quantityDial Setting 50
-_checkQuantity_refresh:
+s quantityDial Setting r0
+quantityRefresh:
 l quantity quantityDial Setting
-j ra
+quantityEnd:
 
-
-_checkConfirm:
 l r0 confirmButton Setting
-beqz r0 ra # return early if button not pressed
-blez quantity ra # return early if quantity is 0
+beqz r0 buttonEnd # skip if button not pressed
+blez quantity buttonEnd # skip if quantity <= 0
 add sp hashIndex 1 # move to peek quantity
 peek r0
-bgtz r0 ra # return early if request for type is active
-add sp sp -1 # move to push quantity
+bgtz r0 buttonEnd # skip if request for type is active
+move sp hashIndex # move back to push quantity
 push quantity
 div r0 quantity 50 # broadcast the request
 ceil r0 r0
 s db Setting r0
-j ra
+sleep 1 # wait to ensure siloController receives request. Better solution?
+move hashIndex -1 # force reset
+buttonEnd:
 
-
-_checkStacker:
 ls r0 stacker 2 Occupied
-beqz r0 ra
+beqz r0 stackerEnd
 ls r0 stacker 2 OccupantHash
 move sp -1
-_checkStacker_loop:
+stackerFindHashLoop:
 add sp sp 2
-bgt sp 19 _checkStacker_unknown
+bgt sp 19 stackerUnknownHash
 peek r1
-bne r1 r0 _checkStacker_loop
-j _checkStacker_known
-_checkStacker_unknown:
+bne r1 r0 stackerFindHashLoop
+j stackerKnownHash
+stackerUnknownHash:
 ls r0 stacker 2 Quantity # set to export what's there
-j _checkStacker_export
-_checkStacker_known:
+j stackerExport
+stackerKnownHash:
 add sp sp 1 # move to peek quantity
 peek r1
+beqz r1 stackerUnknownHash # re-use to ensure everything is exported
 min r0 r1 50
 sub r1 r1 r0 # update request quantity
 add sp sp -1 # move to push quantity
 push r1
-_checkStacker_export:
+stackerExport:
+ls r1 stacker 2 Quantity
 s stacker Setting r0
 s stacker Output 1
-l r0 sorter Output
-bne r0 -1 -1
 s sorter Output sorterOut
-ls r0 stacker 2 Quantity
-beqz r0 ra
+l r2 sorter Output
+brne r2 -1 -1
+beq r0 r1 stackerEnd # if we output the whole stack, skip the purge step
 s stacker Activate 1
-l r0 sorter Output
-bne r0 -1 -1
 s sorter Output sorterReturn
-j ra
+l r0 sorter Output
+brne r0 -1 -1
+stackerEnd:
+j main
