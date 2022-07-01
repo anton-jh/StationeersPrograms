@@ -1,0 +1,126 @@
+alias stacker d0
+alias sorter d1
+alias typeDial d2
+alias quantityDial d3
+alias confirmButton d4
+alias display d5
+
+alias hashIndex r6 # >= 1
+alias hash r7
+alias quantity r8
+alias available r9
+
+define sorterOut 0
+define sorterReturn 1
+
+
+move sp 0
+push 1724793494 # Coal
+push 0
+push 1758427767 # Iron
+push 0
+push -707307845 # Copper
+push 0
+push 1103972403 # Silicon
+push 0
+push -190236170 # Lead
+push 0
+push 1830218956 # Nickel
+push 0
+push -916518678 # Silver
+push 0
+push -1348105509 # Gold
+push 0
+push -983091249 # Cobalt
+push 0
+push -1516581844 # Uranium
+push 0
+
+
+main:
+yield
+
+jal _checkHash
+jal _checkQuantity
+jal _checkConfirm
+jal _checkStacker
+
+j main
+
+
+
+_checkHash:
+l r0 typeDial Setting
+add r0 r0 1
+beq r0 hashIndex ra
+move hashIndex r0
+add sp r0 1
+peek hash
+s display Setting -1
+s db Setting hash
+move available -1
+j ra
+
+
+_checkQuantity:
+l available display Setting
+bltz available ra
+bgez quantity _checkQuantity_refresh
+s quantityDial Mode available
+yield # annoying
+min r0 available 50
+s quantityDial Setting 50
+_checkQuantity_refresh:
+l quantity quantityDial Setting
+j ra
+
+
+_checkConfirm:
+l r0 confirmButton Setting
+beqz r0 ra # return early if button not pressed
+blez quantity ra # return early if quantity is 0
+add sp hashIndex 1 # move to peek quantity
+peek r0
+bgtz r0 ra # return early if request for type is active
+add sp sp -1 # move to push quantity
+push quantity
+div r0 quantity 50 # broadcast the request
+ceil r0 r0
+s db Setting r0
+j ra
+
+
+_checkStacker:
+ls r0 stacker 2 Occupied
+beqz r0 ra
+ls r0 stacker 2 OccupantHash
+move sp -1
+_checkStacker_loop:
+add sp sp 2
+bgt sp 19 _checkStacker_unknown
+peek r1
+bne r1 r0 _checkStacker_loop
+j _checkStacker_known
+_checkStacker_unknown:
+ls r0 stacker 2 Quantity # set to export what's there
+j _checkStacker_export
+_checkStacker_known:
+add sp sp 1 # move to peek quantity
+peek r1
+min r0 r1 50
+sub r1 r1 r0 # update request quantity
+add sp sp -1 # move to push quantity
+push r1
+_checkStacker_export:
+s stacker Setting r0
+s stacker Output 1
+l r0 sorter Output
+bne r0 -1 -1
+s sorter Output sorterOut
+ls r0 stacker 2 Quantity
+beqz r0 ra
+s stacker Activate 1
+l r0 sorter Output
+bne r0 -1 -1
+s sorter Output sorterReturn
+j ra
