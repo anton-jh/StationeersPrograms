@@ -5,10 +5,10 @@ alias quantityDial d3
 alias confirmButton d4
 alias display d5
 
-alias hashIndex r6 # >= 1
-alias hash r7
-alias quantity r8
-alias available r9
+alias hashIndex r8 # >= 1
+alias hash r9
+alias quantity r10
+alias available r11
 
 define sorterOut 0
 define sorterReturn 1
@@ -39,13 +39,12 @@ s stacker Mode 1
 s stacker On 1
 s sorter Mode 2
 s sorter On 1
+s sorter Output -1
 s display Mode 0
 s typeDial Mode 9
 move hashIndex -1
 
 main:
-s stacker Activate 0
-s sorter Output -1
 yield
 
 l r0 typeDial Setting
@@ -66,7 +65,7 @@ bltz available quantityEnd
 bgez quantity quantityRefresh # skip if quantity is already set
 s quantityDial Mode available
 yield # annoying
-min r0 available 50
+min r0 available 50 # default quantity to 50 or what's left
 s quantityDial Setting r0
 quantityRefresh:
 l quantity quantityDial Setting
@@ -87,38 +86,36 @@ sleep 1 # wait to ensure siloController receives request. Better solution?
 move hashIndex -1 # force reset
 buttonEnd:
 
+l r0 sorter Output
+bne r0 -1 stackerEnd # skip if sorter is busy
 ls r0 stacker 2 Occupied
 beqz r0 stackerEnd
 ls r0 stacker 2 OccupantHash
+ls r5 stacker 2 Quantity
 move sp -1
 stackerFindHashLoop:
 add sp sp 2
 bgt sp 19 stackerUnknownHash
 peek r1
-bne r1 r0 stackerFindHashLoop
-j stackerKnownHash
+beq r1 r0 stackerKnownHash
+j stackerFindHashLoop
 stackerUnknownHash:
-ls r0 stacker 2 Quantity # set to export what's there
-j stackerExport
+s stacker Setting r5 # set to empty whole stack
+s stacker Output 1
+s sorter Output sorterOut # send to output
+j stackerEnd
 stackerKnownHash:
 add sp sp 1 # move to peek quantity
 peek r1
-beqz r1 stackerUnknownHash # re-use to ensure everything is exported
 min r0 r1 50
 sub r1 r1 r0 # update request quantity
 add sp sp -1 # move to push quantity
 push r1
-stackerExport:
-ls r1 stacker 2 Quantity
-s stacker Setting r0
+select r1 r0 r0 r5 # if request quantity is 0, set to empty whole stack
+s stacker Setting r1
 s stacker Output 1
-s sorter Output sorterOut
-l r2 sorter Output
-brne r2 -1 -1
-beq r0 r1 stackerEnd # if we output the whole stack, skip the purge step
-s stacker Activate 1
-s sorter Output sorterReturn
-l r0 sorter Output
-brne r0 -1 -1
+select r1 r0 sorterOut sorterReturn
+s sorter Output r1
 stackerEnd:
+
 j main
