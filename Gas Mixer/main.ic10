@@ -3,8 +3,8 @@
 ## Formula:
 ## Y = ( T1*X ) / ( T1*X + T2*(1-X) )
 
-alias analyzer1 d0
-alias analyzer2 d1
+alias analyzer1_H2 d0
+alias analyzer2_O2 d1
 alias analyzerOut d2
 alias mixer d3
 
@@ -20,14 +20,20 @@ define desiredPressure 1000
 loop:
 yield
 l r0 analyzerOut Pressure
-sub r0 desiredPressure r0
-bgtz r0 continue
+l r1 analyzer1_H2 Pressure
+l r2 analyzer2_O2 Pressure
+slt r0 r0 desiredPressure
+sgt r1 r1 1
+sgt r2 r2 1
+and r0 r0 r1
+and r0 r0 r2
+beq r0 1 continue
 s mixer On 0
 j loop
 
 continue:
-l temp1 analyzer1 Temperature
-l temp2 analyzer2 Temperature
+l temp1 analyzer1_H2 Temperature
+l temp2 analyzer2_O2 Temperature
 
 mul r0 temp1 desiredRatio
 sub r1 1 desiredRatio
