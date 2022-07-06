@@ -2,56 +2,58 @@ alias suit db
 alias helmet d0
 alias jetpack d1
 
-alias extPresNotOk r15
-alias extTempNotOk r14
-alias oxygenLow r13
-alias pollutantHigh r12
-alias notBreathable r11
+alias extPresOk r15
+alias extTempOk r14
+alias oxygenOk r13
+alias pollutantOk r12
+alias ok r11
+alias notOk r10
+alias helmetOpen r9
+alias helmetClosed r8
 
 define presMin 20
 define presMax 250
 define tempMin 283
 define tempMax 302
 define oxygenMin 0.2
-define pollutantMax 0.01
+define pollutantMax 0.005
 
 
 loop:
 yield
 
 l r0 suit PressureExternal
-slt r1 r0 presMin
-sgt r2 r0 presMax
-or extPresNotOk r1 r2
+sgt r1 r0 presMin
+slt r2 r0 presMax
+and extPresOk r1 r2
 
 l r0 suit TemperatureExternal
-slt r1 r0 tempMin
-sgt r2 r0 tempMax
-or extTempNotOk r1 r2
+sgt r1 r0 tempMin
+slt r2 r0 tempMax
+and extTempOk r1 r2
 
-l r0 suit RatioOxygen
-slt oxygenLow r0 oxygenMin
+and ok extPresOk extTempOk
+seqz notOk ok
 
-l r0 suit RatioPollutant
-sgt pollutantHigh r0 pollutantMax
-
-or notBreathable extPresNotOk extTempNotOk
-or notBreathable notBreathable oxygenLow
-or notBreathable notBreathable pollutantHigh
-
-s helmet Lock notBreathable
-beqz notBreathable skipClose
+s helmet Lock notOk
+bgtz ok skipClose
 s helmet Open 0
-s suit Error 1
 skipClose:
 
-l r0 helmet Open
+l helmetOpen helmet Open
+seqz helmetClosed helmetOpen
+
+l r0 helmet RatioOxygen
+sgt oxygenOk r0 oxygenMin
+
+l r0 helmet RatioPollutant
+slt pollutantOk r0 pollutantMax
+
+s suit On helmetClosed
+s suit AirRelease helmetClosed
+
+and r0 oxygenOk pollutantOk
 seqz r0 r0
-
-
-
-s suit On r0
-s suit AirRelease r0
 s suit Filtration r0
 
 j loop
