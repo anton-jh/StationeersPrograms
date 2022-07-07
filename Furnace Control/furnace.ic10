@@ -1,0 +1,60 @@
+alias furnace d0
+alias pumpHot d1
+alias pumpCold d2
+alias dialTemp d3
+alias dialPres d4
+
+alias tempErr r15
+alias presErr r14
+alias targetTemp r13
+alias targetPres r12
+alias heatOn r11
+alias coolOn r10
+alias presLow r9
+alias presHigh r8
+alias tempLow r7
+alias tempHigh r6
+alias tempOkPresLow r5
+
+define tempMarginHigh 50
+define tempMarginLow -50
+define presMarginHigh 50
+define presMarginLow -50
+
+
+
+loop:
+move heatOn 0
+move coolOn 0
+
+l r0 dialTemp Setting
+mul targetTemp r0 100
+l r0 dialPres Setting
+mul targetPres r0 100
+
+l r0 furnace Temperature
+sub tempErr r0 targetTemp
+l r1 furnace Pressure
+sub presErr r1 targetPres
+
+slt tempLow tempErr tempMarginLow
+sgt tempHigh tempErr tempMarginHigh
+slt presLow presErr presMarginLow
+sgt presHigh presErr presMarginHigh
+
+mul r0 presHigh 100
+s furnace SettingOutput r0
+
+or r0 tempLow tempHigh
+seqz r0 r0
+and tempOkPresLow r0 presLow
+
+or r0 tempLow tempOkPresLow
+s pumpHot On r0
+or r1 tempHigh tempOkPresLow
+s pumpCold On r1
+or r2 r0 r1
+mul r2 r2 100
+s furnace SettingInput r2
+
+j loop
