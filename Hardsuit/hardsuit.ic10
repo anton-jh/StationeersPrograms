@@ -15,7 +15,7 @@ define presMin 20
 define presMax 250
 define tempMin 283
 define tempMax 302
-define oxygenMin 0.2
+define oxygenMin 20
 define pollutantMax 0.005
 
 
@@ -44,7 +44,9 @@ l helmetOpen helmet Open
 seqz helmetClosed helmetOpen
 
 l r0 helmet RatioOxygen
-sgt oxygenOk r0 oxygenMin
+l r1 helmet Pressure
+mul r2 r0 r1
+sgt oxygenOk r2 oxygenMin
 
 l r0 helmet RatioPollutant
 slt pollutantOk r0 pollutantMax
