@@ -1,44 +1,52 @@
 alias rocket d0
-alias silo d1
-alias miner d2
-alias switch d3
-alias fuelPump d4
+alias fuelPump d1
+alias mainSwitch d2
+alias repeatSwitch d3
+alias optPipeAnalyzer d4
+alias optPump d5
 
 define departFuel 5000
-define maxQuantity 100
+define maxQuantity 600
 define modeLaunch 1
 define modeReady 4
 define modeReturn 5
 define modeLanded 0
 define modeTravel 2
 
+define hashOreMiner -2027419821
+define hashIceMiner 74521920
+define hashGasMiner -1969723301
+define hashScrapMiner -1446002463
+define hashSilo 906210602
+#define hashFuelTank -505333199                           # TODO!
 
-s silo Open 0
+
+sb hashSilo Open 0
 s fuelPump On 0
-s switch Open 0
+s mainSwitch Open 0
 
 
 standby:
 yield
-l r0 switch Setting
+l r0 mainSwitch Setting
 beqz r0 standby
 
 prepare:
 yield
 
-l r0 silo Quantity
+lb r0 hashSilo Quantity Maximum
 snez r1 r0
-s silo Open r1
+sb hashSilo Open r1
 
 l r0 rocket Fuel
 slt r2 r0 departFuel
-l r0 switch Setting
+l r0 mainSwitch Setting
 select r2 r0 r2 0
 s fuelPump On r2
 
 or r0 r1 r2
 bnez r0 prepare
-l r0 switch Setting
+l r0 mainSwitch Setting
 beqz r0 standby
 
 s rocket Activate modeLaunch
@@ -47,20 +55,20 @@ yield
 l r0 rocket Mode
 bne r0 modeReady waitUntilReady
 
-s miner Activate 1
+jal _minersOn
 continueMining:
 yield
-l r0 switch Setting
+l r0 mainSwitch Setting
 beqz r0 land
 l r0 rocket Fuel
 l r1 rocket ReturnFuelCost
 blt r0 r1 land
-l r0 silo Quantity
+lb r0 hashSilo Quantity Maximum
 bge r0 maxQuantity land
 l r0 rocket CollectableGoods
 bnez r0 continueMining
 
-s miner Activate 0
+jal _minersOff
 s rocket Activate modeTravel
 waitUntilFoundCollectables:
 yield
@@ -70,7 +78,7 @@ s rocket Activate modeReady
 j waitUntilReady
 
 land:
-s miner Activate 0
+jal _minersOff
 s rocket Activate modeReturn
 
 waitUntilLanded:
@@ -78,4 +86,22 @@ yield
 l r0 rocket Mode
 bne r0 modeLanded waitUntilLanded
 
+l r0 repeatSwitch Setting
+s mainSwitch Open r0
+
 j prepare
+
+
+_minersOn:
+sb hashOreMiner Activate 1
+sb hashIceMiner Activate 1
+sb hashGasMiner Activate 1
+sb hashScrapMiner Activate 1
+j ra
+
+_minersOff:
+sb hashOreMiner Activate 0
+sb hashIceMiner Activate 0
+sb hashGasMiner Activate 0
+sb hashScrapMiner Activate 0
+j ra
