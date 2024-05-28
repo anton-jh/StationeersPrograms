@@ -1,7 +1,7 @@
-alias doorInt d0
-alias doorExt d1
-alias sensorInt d2
-alias sensorExt d3
+alias doorVacuum d0
+alias doorAtmos d1
+alias sensorAirlock d2
+alias sensorAtmos d3
 alias vent d4
 alias twin d5
 
@@ -11,32 +11,32 @@ define deprMargin 0.01
 
 
 init:
-s doorInt Setting 0
-s doorExt Setting 0
-s doorInt Mode 1
-s doorExt Mode 1
+s doorVacuum Setting 0
+s doorAtmos Setting 0
+s doorVacuum Mode 1
+s doorAtmos Mode 1
 s vent On 0
 
-s doorInt Open 0
-s doorExt Open 0
+s doorVacuum Open 0
+s doorAtmos Open 0
 sleep 1
-s doorExt Open 1
+s doorAtmos Open 1
 
 reset:
 s db Setting 0
 
 idle:
 yield
-l r0 doorInt Setting
+l r0 doorVacuum Setting
 beqz r0 idle
 
-s doorExt Open 0
+s doorAtmos Open 0
 s vent Mode 1
 s vent On 1
 
 waitForDepr:
 yield
-l r0 sensorInt Pressure
+l r0 sensorAirlock Pressure
 bgt r0 deprMargin waitForDepr
 s vent On 0
 
@@ -45,41 +45,41 @@ waitForTwin:
 s db Setting 1
 yield
 l r0 twin Setting
-l r1 doorInt Open
+l r1 doorVacuum Open
 or r0 r0 r1
 beqz r0 waitForTwin
-s doorInt Open 1
+s doorVacuum Open 1
 s db Setting 0
 
 idle2:
 yield
-l r0 doorExt Setting
-l r1 doorInt Open
+l r0 doorAtmos Setting
+l r1 doorVacuum Open
 seqz r1 r1
 or r0 r0 r1
 beqz r0 idle2
 
-s doorInt Open 0
-l r0 sensorExt Pressure
+s doorVacuum Open 0
+l r0 sensorAtmos Pressure
 mul r1 r0 presMargin
 s vent PressureExternal r1
 s vent Mode 0
 s vent On 1
-s doorExt Setting 0
+s doorAtmos Setting 0
 
 waitForPres:
 yield
-l r0 sensorExt Pressure
+l r0 sensorAtmos Pressure
 mul r1 r0 presMargin
 s vent PressureExternal r1
-l r2 sensorInt Pressure
+l r2 sensorAirlock Pressure
 slt r3 r2 r1
-l r4 doorExt Setting
+l r4 doorAtmos Setting
 seqz r4 r4
 and r5 r3 r4
 bnez r5 waitForPres
 
 s vent On 0
-s doorExt Open 1
+s doorAtmos Open 1
 
 j reset
