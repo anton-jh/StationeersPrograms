@@ -32,6 +32,7 @@ beqz r0 idle
 
 s doorAtmos Open 0
 s vent Mode 1
+sleep 1
 s vent On 1
 
 waitForDepr:
@@ -40,7 +41,7 @@ l r0 sensorAirlock Pressure
 bgt r0 deprMargin waitForDepr
 s vent On 0
 
-bdns twin idle2
+bdns twin skipTwin
 waitForTwin:
 s db Setting 1
 yield
@@ -48,6 +49,8 @@ l r0 twin Setting
 l r1 doorVacuum Open
 or r0 r0 r1
 beqz r0 waitForTwin
+
+skipTwin:
 s doorVacuum Open 1
 s db Setting 0
 
@@ -64,6 +67,7 @@ l r0 sensorAtmos Pressure
 mul r1 r0 presMargin
 s vent PressureExternal r1
 s vent Mode 0
+sleep 1
 s vent On 1
 s doorAtmos Setting 0
 
