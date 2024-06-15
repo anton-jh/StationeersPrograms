@@ -63,19 +63,17 @@ or r0 r0 r1
 beqz r0 idle2
 
 s doorVacuum Open 0
+yield
+bdns sensorAtmos noAtmosSensor
 l r0 sensorAtmos Pressure
 mul r1 r0 presMargin
 s vent PressureExternal r1
 s vent Mode 0
-sleep 1
 s vent On 1
 s doorAtmos Setting 0
 
 waitForPres:
 yield
-l r0 sensorAtmos Pressure
-mul r1 r0 presMargin
-s vent PressureExternal r1
 l r2 sensorAirlock Pressure
 slt r3 r2 r1
 l r4 doorAtmos Setting
@@ -84,6 +82,7 @@ and r5 r3 r4
 bnez r5 waitForPres
 
 s vent On 0
+noAtmosSensor:
 s doorAtmos Open 1
 
 j reset
