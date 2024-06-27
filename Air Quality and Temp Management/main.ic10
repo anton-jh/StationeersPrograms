@@ -1,0 +1,44 @@
+alias hotValve d0
+alias coldValve d1
+
+alias temp r8
+alias combustion r9
+alias warning r10
+alias emergency r11
+alias notEmergency r12
+
+define gasSensor 123
+define activeLiquidOutlet 123
+define warningLight 123
+define speaker 123
+
+define min 19
+define max 20
+define volRatioWarning 0.05
+
+
+loop:
+yield
+lb temp gasSensor Temperature Average
+lb combustion gasSensor Combustion Maximum
+
+sge emergency r0 50
+or emergency emergency combustion
+seqz notEmergency emergency
+
+slt r0 temp min
+and r1 r0 notEmergency
+s hotValve Setting r1
+
+sgt r0 temp max
+and r1 r0 notEmergency
+s coldValve Setting r1
+
+lb r0 gasSensor RatioVolatiles Maximum
+or r1 r0 emergency
+sb warningLight On r1
+
+sb speaker On emergency
+sb activeLiquidOutlet On emergency
+
+j loop
