@@ -1,4 +1,4 @@
-alias filtration d0
+alias device d0
 alias bypassValve d1
 alias outputAnalyzer d2
 alias pressureDial d3
@@ -14,6 +14,6 @@ sgt r2 r0 r1
 seqz r3 r2
 
 s bypassValve On r2
-s filtration On r3
+s device On r3
 
 j loop
