@@ -1,11 +1,13 @@
 alias hotValve d0
 alias coldValve d1
+alias transformer1 d3
+alias transformer2 d4
+alias transformer3 d5
 
 alias temp r8
 alias combustion r9
-alias warning r10
-alias emergency r11
-alias notEmergency r12
+alias emergency r10
+alias notEmergency r11
 
 define gasSensor 123
 define activeLiquidOutlet 123
@@ -14,7 +16,7 @@ define speaker 123
 
 define min 19
 define max 20
-define volRatioWarning 0.05
+define volRatioWarning 0.01
 
 
 loop:
@@ -26,19 +28,34 @@ sge emergency r0 50
 or emergency emergency combustion
 seqz notEmergency emergency
 
+bdns hotValve skipHot
 slt r0 temp min
 and r1 r0 notEmergency
 s hotValve Setting r1
+skipHot:
 
+bdns coldValve skipCold
 sgt r0 temp max
 and r1 r0 notEmergency
 s coldValve Setting r1
+skipCold:
 
 lb r0 gasSensor RatioVolatiles Maximum
-or r1 r0 emergency
-sb warningLight On r1
+sgt r1 r0 volRatioWarning
+or r2 r1 emergency
+sb warningLight On r2
 
 sb speaker On emergency
 sb activeLiquidOutlet On emergency
 
+beqz emergency loop
+
+bdns transformer1 t2
+s transformer1 On 0
+t2:
+bdns transformer2 t3
+s transformer2 On 0
+t3:
+bdns transformer3 loop
+s transformer3 On 0
 j loop
