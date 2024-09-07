@@ -9,10 +9,10 @@ alias combustion r9
 alias emergency r10
 alias notEmergency r11
 
-define gasSensor 123
-define activeLiquidOutlet 123
-define warningLight 123
-define speaker 123
+define gasSensor -1252983604
+define activeLiquidOutlet 1687692899
+define warningLight -2107840748
+define speaker -828056979
 
 define min 19
 define max 20
