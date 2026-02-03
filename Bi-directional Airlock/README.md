@@ -25,3 +25,6 @@ Two controllers, one for each side, sharing central door.
     ~~YES~~
 
 ~~Pressure margins.~~
+
+"Long mode" where both chambers sync and act as one normal airlock (keeping the middle central door open)
+to allow fitting crates through more easily.
