@@ -1,0 +1,54 @@
+alias sensor d0
+alias ventCO2 d1
+alias ventN d2
+alias ventO2 d3
+alias ventExhaust d4
+
+alias allowFeed r8
+
+define pressureFeed 91
+define pressureTarget 90
+define pressureExhaust 89
+define minRatioCO2 0.05
+define minRatioN 0.05
+define minPartialO2 22
+
+
+s ventCO2 Mode Vent.Outward
+s ventN Mode Vent.Outward
+s ventO2 Mode Vent.Outward
+s ventExhaust Mode Vent.Inward
+s ventCO2 PressureExternal pressureFeed
+s ventN PressureExternal pressureFeed
+s ventO2 PressureExternal pressureFeed
+s ventExhaust PressureExternal pressureExhaust
+
+loop:
+yield
+
+l r0 sensor RatioOxygen
+l r1 sensor Pressure
+mul r2 r0 r1
+slt r3 r2 minPartialO2
+and r1 r1 allowFeed
+s ventO2 On r3
+seqz allowFeed r3
+
+l r0 sensor RatioCarbonDioxide
+slt r1 r0 minRatioCO2
+and r1 r1 allowFeed
+s ventCO2 On r1
+
+l r0 sensor RatioNitrogen
+slt r0 r0 minRatioN
+l r1 sensor Pressure
+slt r1 r1 pressureTarget
+or r2 r0 r1
+and r3 r2 allowFeed
+s ventN On r1
+
+l r0 sensor Pressure
+sgt r1 r0 pressureTarget
+s ventExhaust On r1
+
+j loop
