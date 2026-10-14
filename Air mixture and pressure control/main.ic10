@@ -4,7 +4,10 @@ alias ventN d2
 alias ventO2 d3
 alias ventExhaust d4
 
-alias allowFeed r8
+alias noO2Prio r8
+alias pressure r9
+alias lowPressure r10
+alias noN r11
 
 define pressureMin 89
 define pressureTarget 90
@@ -17,38 +20,51 @@ define minPartialO2 22
 loop:
 yield
 
-s ventCO2 Mode Vent.Outward
-s ventN Mode Vent.Outward
 s ventO2 Mode Vent.Outward
-s ventExhaust Mode Vent.Inward
-s ventCO2 PressureExternal pressureTarget
-s ventN PressureExternal pressureTarget
 s ventO2 PressureExternal pressureTarget
+s ventCO2 Mode Vent.Outward
+s ventCO2 PressureExternal pressureTarget
+s ventExhaust Mode Vent.Inward
 s ventExhaust PressureExternal pressureTarget
+bdns ventN setupNoN
+s ventN Mode Vent.Outward
+s ventN PressureExternal pressureTarget
+setupNoN:
+
+l pressure sensor Pressure
+slt lowPressure pressure pressureMin
+
+bdns ventN noVentN
+l r0 ventN PressureOutput # Should be pipe pressure
+slt noN r0 10
+j afterNoVentN
+noVentN:
+move noN 1
+afterNoVentN:
+
 
 l r0 sensor RatioOxygen
-l r1 sensor Pressure
-mul r2 r0 r1
-slt r3 r2 minPartialO2
-and r1 r1 allowFeed
-s ventO2 On r3
-seqz allowFeed r3
+mul r0 r0 pressure
+slt r0 r0 minPartialO2
+and r1 lowPressure noN
+or r2 r0 r1
+s ventO2 On r2
+seqz noO2Prio r0
 
 l r0 sensor RatioCarbonDioxide
-slt r1 r0 minRatioCO2
-and r1 r1 allowFeed
-s ventCO2 On r1
+slt r0 r0 minRatioCO2
+and r0 r0 noO2Prio
+s ventCO2 On r0
 
+bdns ventN skipN
 l r0 sensor RatioNitrogen
 slt r0 r0 minRatioN
-l r1 sensor Pressure
-slt r1 r1 pressureMin
-or r2 r0 r1
-and r3 r2 allowFeed
-s ventN On r1
+or r0 r0 lowPressure
+and r0 r0 noO2Prio
+s ventN On r0
+skipN:
 
-l r0 sensor Pressure
-sgt r1 r0 pressureMax
-s ventExhaust On r1
+sgt r0 pressure pressureMax
+s ventExhaust On r0
 
 j loop
